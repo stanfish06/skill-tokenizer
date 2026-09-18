@@ -8,6 +8,6 @@ name = "skill-tokenizer"
 path = "src/main.rs"
 
 [dependencies]
-clap = "4.6.7"
+clap = { version = "4", features = ["derive"] }
 pulldown-cmark = "0.13.4"
 tokenizers = { workspace = true }

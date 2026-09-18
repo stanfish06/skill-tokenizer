@@ -7,9 +7,39 @@ use tokenizers::TokenizerBuilder;
 use tokenizers::TokenizerImpl;
 use tokenizers::decoders::byte_fallback::ByteFallback;
 use tokenizers::models::bpe::BPE;
+use tokenizers::models::bpe::BpeTrainer;
+use tokenizers::models::bpe::BpeTrainerBuilder;
 use tokenizers::normalizers::{Lowercase, Sequence, Strip, StripAccents, unicode::NFC};
 use tokenizers::pre_tokenizers::whitespace::WhitespaceSplit;
 use tokenizers::processors::template::TemplateProcessing;
+
+#[derive(ClapParser)]
+#[command(
+    name = "skill-tokenizer",
+    version,
+    about = "tokenizer for agent skills"
+)]
+struct Cli {
+    input: PathBuf,
+
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    verbose: u8,
+
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    Run {
+        #[arg(long, default_value_t = 4)]
+        threads: usize,
+    },
+    Clean,
+}
 
 fn initialize_model() -> Result<
     TokenizerImpl<
@@ -45,39 +75,61 @@ fn initialize_model() -> Result<
     return tokenizer;
 }
 
-fn train() {}
+const DEFAULT_VOCAB_SIZE: usize = 1000;
+fn initialize_trainer(vocab_size: usize) -> BpeTrainer {
+    let trainer = BpeTrainerBuilder::new()
+        .show_progress(true)
+        .vocab_size(vocab_size)
+        .min_frequency(0)
+        .build();
+    return trainer;
+}
 
 fn encode() {}
 
-fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
-    let file_path = &args[0];
-    let content = fs::read_to_string(file_path);
+fn text_parser() {}
+fn html_parser() {}
+fn code_parser() {}
+fn math_parser() {}
+
+fn markdown_parser(f: &str) {
+    let content = fs::read_to_string(f);
     match &content {
         Ok(v) => {
             let parser = Parser::new(v).map(|event| {
                 match &event {
-                    Event::Start(tag) => println!("Start: {:?}", tag),
-                    Event::End(tag) => println!("End: {:?}", tag),
-                    Event::Html(s) => println!("Html: {:?}", s),
-                    Event::InlineHtml(s) => println!("InlineHtml: {:?}", s),
-                    Event::Text(s) => {
-                        println!("Text: {:?}", s);
-                    }
-                    Event::Code(s) => println!("Code: {:?}", s),
-                    Event::DisplayMath(s) => println!("DisplayMath: {:?}", s),
-                    Event::InlineMath(s) => println!("Math: {:?}", s),
-                    Event::FootnoteReference(s) => println!("FootnoteReference: {:?}", s),
-                    Event::TaskListMarker(b) => println!("TaskListMarker: {:?}", b),
-                    Event::SoftBreak => println!("SoftBreak"),
-                    Event::HardBreak => println!("HardBreak"),
-                    Event::Rule => println!("Rule"),
+                    Event::Html(s) => html_parser(s),
+                    Event::InlineHtml(s) => html_parser(s),
+                    Event::Text(s) => text_parser(s),
+                    Event::Code(s) => code_parser(s),
+                    Event::DisplayMath(s) => math_parser(s),
+                    Event::InlineMath(s) => math_parser(s),
+                    // patterns that likely dont matter
+                    // Event::Rule => println!("Rule"),
+                    // Event::Start(tag) => println!("Start: {:?}", tag),
+                    // Event::End(tag) => println!("End: {:?}", tag),
+                    // Event::FootnoteReference(s) => println!("FootnoteReference: {:?}", s),
+                    // Event::SoftBreak => println!("SoftBreak"),
+                    // Event::HardBreak => println!("HardBreak"),
+                    // Event::TaskListMarker(b) => println!("TaskListMarker: {:?}", b),
+                    _ => (),
                 };
                 event
             });
-            let mut html_output = String::new();
-            html::push_html(&mut html_output, parser);
         }
         Err(e) => println!("Failed to read file: {:?}", e),
     }
+}
+
+fn main() {
+    let args: Vec<String> = env::args().skip(1).collect();
+    let paths = &args;
+    let train_data = paths.into_iter().flat_map(|f| markdown_parser(f));
+
+    let trainer = initialize_trainer(DEFAULT_VOCAB_SIZE);
+    let mut model = initialize_model().unwrap();
+    let pretty = false;
+    model
+        .train(trainer, train_data)
+        .save("tokenizer.json", pretty)?;
 }
