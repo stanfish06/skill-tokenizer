@@ -1,20 +1,48 @@
+use clap::{Parser as ClapParser, Subcommand};
 use pulldown_cmark::{Event, Parser, html};
-use tokenizers::normalizer::NormalizedString;
-use tokenizers::Normalizer;
-use tokenizers::PreTokenizer;
 use std::env;
 use std::fs;
-use tokenizers::pre_tokenizer::PreTokenizedString;
+use std::path::PathBuf;
+use tokenizers::TokenizerBuilder;
+use tokenizers::TokenizerImpl;
+use tokenizers::decoders::byte_fallback::ByteFallback;
+use tokenizers::models::bpe::BPE;
+use tokenizers::normalizers::{Lowercase, Sequence, Strip, StripAccents, unicode::NFC};
 use tokenizers::pre_tokenizers::whitespace::WhitespaceSplit;
-use tokenizers::normalizers::{Lowercase, Sequence, Strip};
+use tokenizers::processors::template::TemplateProcessing;
 
-fn preprocess(s: &str) -> PreTokenizedString {
-    let mut normalized : NormalizedString = s.to_string().into();
-    let normalizer = Sequence::new(vec![Strip::new(true, true).into(), Lowercase.into()]);
-    normalizer.normalize(&mut normalized);
-    let mut pre_tokenized = PreTokenizedString::from(normalized);
-    WhitespaceSplit.pre_tokenize(&mut pre_tokenized);
-    return pre_tokenized;
+fn initialize_model() -> Result<
+    TokenizerImpl<
+        tokenizers::models::bpe::BPE,
+        tokenizers::normalizers::Sequence,
+        tokenizers::pre_tokenizers::whitespace::WhitespaceSplit,
+        TemplateProcessing,
+        tokenizers::decoders::byte_fallback::ByteFallback,
+    >,
+    Box<dyn std::error::Error + Send + Sync>,
+> {
+    let normalizer = Some(Sequence::new(vec![
+        Strip::new(true, true).into(),
+        StripAccents.into(),
+        Lowercase.into(),
+        NFC.into(),
+    ]));
+    let post_processor = TemplateProcessing::builder()
+        .try_single("[CLS] $0 [SEP]")
+        .unwrap()
+        .try_pair("[CLS]:0 $A:0 [SEP]:0 $B:1 [SEP]:1")
+        .unwrap()
+        .special_tokens(vec![("[CLS]", 1), ("[SEP]", 0)])
+        .build()
+        .unwrap();
+    let tokenizer = TokenizerBuilder::new()
+        .with_model(BPE::default())
+        .with_normalizer(normalizer)
+        .with_pre_tokenizer(Some(WhitespaceSplit))
+        .with_post_processor(Some(post_processor))
+        .with_decoder(Some(ByteFallback::default()))
+        .build();
+    return tokenizer;
 }
 
 fn train() {}
@@ -35,7 +63,6 @@ fn main() {
                     Event::InlineHtml(s) => println!("InlineHtml: {:?}", s),
                     Event::Text(s) => {
                         println!("Text: {:?}", s);
-                        preprocess(s);
                     }
                     Event::Code(s) => println!("Code: {:?}", s),
                     Event::DisplayMath(s) => println!("DisplayMath: {:?}", s),
