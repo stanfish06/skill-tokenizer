@@ -1,0 +1,12 @@
+[package]
+name = "skill-tokenizer"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "skill-tokenizer"
+path = "src/main.rs"
+
+[dependencies]
+pulldown-cmark = "0.13.4"
+tokenizers = { workspace = true }

@@ -1,7 +1,13 @@
-[package]
-name = "skill-tokenizer"
+[workspace]
+resolver = "3"
+members = [
+    "skill-tokenizer",
+    "vendors/tokenizers/tokenizers"
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-pulldown-cmark = "0.13.4"
+[workspace.dependencies]
+tokenizers = { path = "vendors/tokenizers/tokenizers" }
