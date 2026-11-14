@@ -43,7 +43,17 @@ needed for this work.
    generated script. Actual Tab input expanded `a` to `atomize`, `--api` to
    `--api-key-file`, and the example source prefix to `SKILL.md`. Exited the
    temporary shell afterward.
-5. Final package tests, formatting, Clippy, and review are the delivery gates.
+5. Package verification passed: 12 tests, formatting, Clippy, and build. Both
+   review axes found the same Zsh cursor-position defect in Usage 5's generator:
+   it completed the last word even when the cursor was earlier in the line.
+6. Added a registered-handler regression using `--api README.md` with the cursor
+   on `--api`. It first failed by offering `README.md`. Added a Zsh-only adapter
+   that scopes the handler's local word array to the cursor, preserving the
+   actual line. The check now offers `--api-key-file`. Actual ZLE Tab verification
+   also changed the flag and left the trailing `README.md` intact.
+7. Both reviewers inspected the adapter, reran the Zsh check, and closed the
+   finding. No remaining concrete spec findings, standards breaches, or material
+   heuristic smells. The check also passes with Usage 7.3.0.
 
 ## Commands
 

@@ -17,7 +17,27 @@ zsh -n "$completion_tmp/_skill-tokenizer"
 autoload -Uz compinit
 compinit -D -i
 source "$completion_tmp/_skill-tokenizer"
-[[ ${_comps[skill-tokenizer]-} == _skill_tokenizer ]]
+[[ -n ${_comps[skill-tokenizer]-} ]]
+
+# Capture the registered handler's public compadd calls without requiring a ZLE.
+compadd() {
+    while (( $# )); do
+        if [[ $1 == -a ]]; then
+            shift
+            print -rl -- "${(@P)1}"
+            return
+        fi
+        shift
+    done
+}
+typeset -A compstate
+typeset -a words=(skill-tokenizer atomize --api README.md)
+CURRENT=3
+handler_output=$("${_comps[skill-tokenizer]}")
+[[ $handler_output == --api-key-file ]] || {
+    print -u2 -r -- "Mid-line flag completion returned: $handler_output"
+    exit 1
+}
 
 expect_candidate() {
     local expected=$1

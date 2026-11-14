@@ -119,6 +119,7 @@ fn main() -> tokenizers::Result<()> {
     match Cli::parse() {
         Cli::Usage => writeln!(io::stdout().lock(), "{}", usage_spec())?,
         Cli::Completions { shell } => {
+            let zsh = shell == "zsh";
             let script = complete(&CompleteOptions {
                 usage_bin: "usage".to_owned(),
                 shell,
@@ -130,6 +131,11 @@ fn main() -> tokenizers::Result<()> {
                 source_file: None,
             })?;
             writeln!(io::stdout().lock(), "{script}")?;
+            if zsh {
+                io::stdout()
+                    .lock()
+                    .write_all(include_bytes!("../completions/zsh-cursor.zsh"))?;
+            }
         }
         Cli::Atomize(args) => atomize::run(args)?,
         Cli::Train {
