@@ -10,13 +10,17 @@ use tokenizers::pre_tokenizers::whitespace::WhitespaceSplit;
 use tokenizers::processors::template::TemplateProcessing;
 use tokenizers::{AddedToken, Tokenizer, TokenizerBuilder, TokenizerImpl};
 
+mod atomize;
+
 #[derive(ClapParser)]
 #[command(
     name = "skill-tokenizer",
     version,
-    about = "tokenizer for agent skills"
+    about = "BPE tokenization and source-grounded atomization for agent skills"
 )]
 enum Cli {
+    /// extract independently testable facts and rules from one Markdown skill
+    Atomize(atomize::AtomizeArgs),
     /// train a BPE tokenizer on every .md file under PATH
     Train {
         path: PathBuf,
@@ -96,6 +100,7 @@ fn markdown_text(path: &Path) -> Vec<String> {
 
 fn main() -> tokenizers::Result<()> {
     match Cli::parse() {
+        Cli::Atomize(args) => atomize::run(args)?,
         Cli::Train {
             path,
             output,

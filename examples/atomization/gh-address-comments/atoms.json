@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "source": {
+    "path": "examples/atomization/gh-address-comments/SKILL.md",
+    "sha256": "c1ebc337357402f7faabafe712e0c463981a65f736453efe52abd305bcb74769",
+    "bytes": 3536
+  },
+  "prompt": {
+    "version": "atomize-v1",
+    "sha256": "ffe293a75254d598b290b36fb2867a528c08d4ac60b46c93bf2233e1802d159c"
+  },
+  "model": {
+    "requested": "gpt-6-luna",
+    "returned": "gpt-6-luna"
+  },
+  "usage": {
+    "prompt_tokens": 1700,
+    "completion_tokens": 3082,
+    "total_tokens": 4782
+  },
+  "atoms": [
+    {
+      "id": "atom-0001",
+      "statement": "Use the GitHub app from the plugin for pull request metadata and patch context.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "Use the GitHub app from this plugin for PR metadata and patch context, but treat thread-aware review data as a `gh api graphql` problem because the connector comment surface is flat and does not preserve full review-thread state.",
+          "start_line": 8,
+          "end_line": 8,
+          "start_byte": 560,
+          "end_byte": 789
+        }
+      ]
+    },
+    {
+      "id": "atom-0002",
+      "statement": "When the task depends on thread-level review state, use `gh api graphql` rather than relying on the connector’s flat comment surface, which does not preserve full review-thread state.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "Use the GitHub app from this plugin for PR metadata and patch context, but treat thread-aware review data as a `gh api graphql` problem because the connector comment surface is flat and does not preserve full review-thread state.",
+          "start_line": 8,
+          "end_line": 8,
+          "start_byte": 560,
+          "end_byte": 789
+        }
+      ]
+    },
+    {
+      "id": "atom-0003",
+      "statement": "If CLI authentication is required, confirm `gh auth status` first; if it fails, ask the user to authenticate with `gh auth login`.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "Run all `gh` commands with elevated network access. If CLI auth is required, confirm `gh auth status` first and ask the user to authenticate with `gh auth login` if it fails.",
+          "start_line": 10,
+          "end_line": 10,
+          "start_byte": 791,
+          "end_byte": 965
+        }
+      ]
+    },
+    {
+      "id": "atom-0004",
+      "statement": "Run all `gh` commands with elevated network access.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "Run all `gh` commands with elevated network access. If CLI auth is required, confirm `gh auth status` first and ask the user to authenticate with `gh auth login` if it fails.",
+          "start_line": 10,
+          "end_line": 10,
+          "start_byte": 791,
+          "end_byte": 965
+        }
+      ]
+    },
+    {
+      "id": "atom-0005",
+      "statement": "When the user provides a repository and PR number or URL, use those directly to resolve the PR.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If the user provides a repository and PR number or URL, use that directly.",
+          "start_line": 15,
+          "end_line": 15,
+          "start_byte": 1002,
+          "end_byte": 1078
+        }
+      ]
+    },
+    {
+      "id": "atom-0006",
+      "statement": "To resolve a PR for the current branch, use local git context, `gh auth status`, and `gh pr view --json number,url`.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If the request is about the current branch PR, use local git context plus `gh auth status` and `gh pr view --json number,url` to resolve it.",
+          "start_line": 16,
+          "end_line": 16,
+          "start_byte": 1082,
+          "end_byte": 1224
+        }
+      ]
+    },
+    {
+      "id": "atom-0007",
+      "statement": "When the repository and PR are known, use the GitHub app from the plugin to fetch PR metadata and patch context.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Use the GitHub app from this plugin to fetch PR metadata and patch context when the repo and PR are known.",
+          "start_line": 18,
+          "end_line": 18,
+          "start_byte": 1279,
+          "end_byte": 1387
+        }
+      ]
+    },
+    {
+      "id": "atom-0008",
+      "statement": "The bundled `scripts/fetch_comments.py` workflow fetches `reviewThreads`, `isResolved`, `isOutdated`, and file and line anchors that the connector comment surface does not preserve.",
+      "kind": "fact",
+      "evidence": [
+        {
+          "quote": "- Use the bundled `scripts/fetch_comments.py` workflow whenever the task depends on unresolved review threads, inline review locations, or resolution state. That script fetches `reviewThreads`, `isResolved`, `isOutdated`, and file and line anchors that the connector comment surface does not preserve.",
+          "start_line": 19,
+          "end_line": 19,
+          "start_byte": 1391,
+          "end_byte": 1692
+        }
+      ]
+    },
+    {
+      "id": "atom-0009",
+      "statement": "Use the bundled `scripts/fetch_comments.py` workflow whenever a task depends on unresolved review threads, inline review locations, or resolution state.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Use the bundled `scripts/fetch_comments.py` workflow whenever the task depends on unresolved review threads, inline review locations, or resolution state. That script fetches `reviewThreads`, `isResolved`, `isOutdated`, and file and line anchors that the connector comment surface does not preserve.",
+          "start_line": 19,
+          "end_line": 19,
+          "start_byte": 1391,
+          "end_byte": 1692
+        }
+      ]
+    },
+    {
+      "id": "atom-0010",
+      "statement": "Use connector-only comment reads only for lightweight top-level PR comment summaries.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Use connector-only comment reads only for lightweight top-level PR comment summaries.",
+          "start_line": 20,
+          "end_line": 20,
+          "start_byte": 1696,
+          "end_byte": 1783
+        }
+      ]
+    },
+    {
+      "id": "atom-0011",
+      "statement": "Group review comments by file or behavior area.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Group comments by file or behavior area.",
+          "start_line": 22,
+          "end_line": 22,
+          "start_byte": 1825,
+          "end_byte": 1867
+        }
+      ]
+    },
+    {
+      "id": "atom-0012",
+      "statement": "Separate actionable change requests from informational comments, approvals, already-resolved threads, and duplicates.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Separate actionable change requests from informational comments, approvals, already-resolved threads, and duplicates.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 1871,
+          "end_byte": 1990
+        }
+      ]
+    },
+    {
+      "id": "atom-0013",
+      "statement": "Before editing, present numbered actionable threads with a one-line summary of the required change.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Present numbered actionable threads with a one-line summary of the required change.",
+          "start_line": 25,
+          "end_line": 25,
+          "start_byte": 2027,
+          "end_byte": 2112
+        }
+      ]
+    },
+    {
+      "id": "atom-0014",
+      "statement": "If the user did not ask to fix everything, ask which threads to address.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If the user did not ask to fix everything, ask which threads to address.",
+          "start_line": 26,
+          "end_line": 26,
+          "start_byte": 2116,
+          "end_byte": 2190
+        }
+      ]
+    },
+    {
+      "id": "atom-0015",
+      "statement": "If the user asks to fix everything, interpret that as all unresolved actionable threads and call out anything ambiguous.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If the user asks to fix everything, interpret that as all unresolved actionable threads and call out anything ambiguous.",
+          "start_line": 27,
+          "end_line": 27,
+          "start_byte": 2194,
+          "end_byte": 2316
+        }
+      ]
+    },
+    {
+      "id": "atom-0016",
+      "statement": "Implement the selected fixes locally.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "5. Implement the selected fixes locally.",
+          "start_line": 28,
+          "end_line": 28,
+          "start_byte": 2317,
+          "end_byte": 2357
+        }
+      ]
+    },
+    {
+      "id": "atom-0017",
+      "statement": "Keep each code change traceable to the thread or feedback cluster it addresses.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Keep each code change traceable back to the thread or feedback cluster it addresses.",
+          "start_line": 29,
+          "end_line": 29,
+          "start_byte": 2361,
+          "end_byte": 2447
+        }
+      ]
+    },
+    {
+      "id": "atom-0018",
+      "statement": "If a comment calls for explanation rather than code, draft a response instead of forcing a code change.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If a comment calls for explanation rather than code, draft the response rather than forcing a code change.",
+          "start_line": 30,
+          "end_line": 30,
+          "start_byte": 2451,
+          "end_byte": 2559
+        }
+      ]
+    },
+    {
+      "id": "atom-0019",
+      "statement": "Summarize which threads were addressed, which were intentionally left open, and what tests or checks support the change.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- List which threads were addressed, which were intentionally left open, and what tests or checks support the change.",
+          "start_line": 32,
+          "end_line": 32,
+          "start_byte": 2588,
+          "end_byte": 2705
+        }
+      ]
+    },
+    {
+      "id": "atom-0020",
+      "statement": "Do not reply on GitHub, resolve review threads, or submit a review unless the user explicitly asks for that write action.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Do not reply on GitHub, resolve review threads, or submit a review unless the user explicitly asks for that write action.",
+          "start_line": 36,
+          "end_line": 36,
+          "start_byte": 2724,
+          "end_byte": 2847
+        }
+      ]
+    },
+    {
+      "id": "atom-0021",
+      "statement": "If review comments conflict with each other or would cause a behavioral regression, surface the tradeoff before making changes.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If review comments conflict with each other or would cause a behavioral regression, surface the tradeoff before making changes.",
+          "start_line": 37,
+          "end_line": 37,
+          "start_byte": 2848,
+          "end_byte": 2977
+        }
+      ]
+    },
+    {
+      "id": "atom-0022",
+      "statement": "If a comment is ambiguous, ask for clarification or draft a proposed response instead of guessing.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If a comment is ambiguous, ask for clarification or draft a proposed response instead of guessing.",
+          "start_line": 38,
+          "end_line": 38,
+          "start_byte": 2978,
+          "end_byte": 3078
+        }
+      ]
+    },
+    {
+      "id": "atom-0023",
+      "statement": "Do not treat flat PR comments from the connector as a complete representation of review-thread state.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Do not treat flat PR comments from the connector as a complete representation of review-thread state.",
+          "start_line": 39,
+          "end_line": 39,
+          "start_byte": 3079,
+          "end_byte": 3182
+        }
+      ]
+    },
+    {
+      "id": "atom-0024",
+      "statement": "If `gh` encounters authentication or rate-limit issues mid-run, ask the user to re-authenticate and retry.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- If `gh` hits auth or rate-limit issues mid-run, ask the user to re-authenticate and retry.",
+          "start_line": 40,
+          "end_line": 40,
+          "start_byte": 3183,
+          "end_byte": 3275
+        }
+      ]
+    },
+    {
+      "id": "atom-0025",
+      "statement": "If neither the connector nor `gh` can resolve the PR cleanly, tell the user whether the blocker is missing repository scope, missing PR context, or CLI authentication, then ask for the missing repo or PR identifier or a refreshed `gh` login.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "If neither the connector nor `gh` can resolve the PR cleanly, tell the user whether the blocker is missing repository scope, missing PR context, or CLI authentication, then ask for the missing repo or PR identifier or for a refreshed `gh` login.",
+          "start_line": 44,
+          "end_line": 44,
+          "start_byte": 3290,
+          "end_byte": 3535
+        }
+      ]
+    }
+  ]
+}

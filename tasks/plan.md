@@ -109,9 +109,9 @@ Run from the repository root, with the pinned tokenizer submodule initialized:
 
 ```sh
 git submodule update --init --recursive
-cargo fmt --all -- --check
+cargo fmt -p skill-tokenizer -- --check
 cargo test -p skill-tokenizer
-cargo clippy -p skill-tokenizer --all-targets -- -D warnings
+cargo clippy -p skill-tokenizer --all-targets --no-deps -- -D warnings
 cargo build -p skill-tokenizer
 ```
 

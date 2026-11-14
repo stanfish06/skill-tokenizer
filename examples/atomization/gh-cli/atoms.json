@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "source": {
+    "path": "examples/atomization/gh-cli/SKILL.md",
+    "sha256": "3810c9ff56ae9a26f4c6c1e0d058a946cd97e800441630208007a0983b9cfc49",
+    "bytes": 1242
+  },
+  "prompt": {
+    "version": "atomize-v1",
+    "sha256": "ffe293a75254d598b290b36fb2867a528c08d4ac60b46c93bf2233e1802d159c"
+  },
+  "model": {
+    "requested": "gpt-6-luna",
+    "returned": "gpt-6-luna"
+  },
+  "usage": {
+    "prompt_tokens": 1250,
+    "completion_tokens": 1842,
+    "total_tokens": 3092
+  },
+  "atoms": [
+    {
+      "id": "atom-0001",
+      "statement": "Use the gh-cli workflow when working with GitHub repositories, pull requests, issues, releases, or raw file URLs.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Working with GitHub repositories, pull requests, issues, releases, or raw file URLs.",
+          "start_line": 10,
+          "end_line": 10,
+          "start_byte": 235,
+          "end_byte": 321
+        }
+      ]
+    },
+    {
+      "id": "atom-0002",
+      "statement": "Use the gh-cli workflow when authenticated access to private repositories or higher API rate limits are needed.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- You need authenticated access to private repositories or higher API rate limits.",
+          "start_line": 11,
+          "end_line": 11,
+          "start_byte": 322,
+          "end_byte": 404
+        }
+      ]
+    },
+    {
+      "id": "atom-0003",
+      "statement": "Use the gh-cli workflow before using `curl`, `wget`, `WebFetch`, or an MCP fetch tool against GitHub.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- You are about to use `curl`, `wget`, `WebFetch`, or an MCP fetch tool against GitHub.",
+          "start_line": 12,
+          "end_line": 12,
+          "start_byte": 405,
+          "end_byte": 492
+        }
+      ]
+    },
+    {
+      "id": "atom-0004",
+      "statement": "Do not use the gh-cli workflow when the target is not GitHub.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- The target is not GitHub.",
+          "start_line": 16,
+          "end_line": 16,
+          "start_byte": 514,
+          "end_byte": 541
+        }
+      ]
+    },
+    {
+      "id": "atom-0005",
+      "statement": "Do not use the gh-cli workflow when plain local git operations already solve the task.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Plain local git operations already solve the task.",
+          "start_line": 17,
+          "end_line": 17,
+          "start_byte": 542,
+          "end_byte": 594
+        }
+      ]
+    },
+    {
+      "id": "atom-0006",
+      "statement": "For GitHub content, prefer the authenticated `gh` CLI over raw HTTP fetches.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "Prefer the authenticated `gh` CLI over raw HTTP fetches for GitHub content.",
+          "start_line": 21,
+          "end_line": 21,
+          "start_byte": 609,
+          "end_byte": 684
+        }
+      ]
+    },
+    {
+      "id": "atom-0007",
+      "statement": "Prefer `gh api` over unauthenticated `curl` or `wget` for GitHub content.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer `gh repo view`, `gh pr view`, `gh pr list`, `gh issue view`, and `gh api` over unauthenticated `curl` or `wget`.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 701,
+          "end_byte": 822
+        }
+      ]
+    },
+    {
+      "id": "atom-0008",
+      "statement": "Prefer `gh issue view` over unauthenticated `curl` or `wget` for GitHub content.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer `gh repo view`, `gh pr view`, `gh pr list`, `gh issue view`, and `gh api` over unauthenticated `curl` or `wget`.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 701,
+          "end_byte": 822
+        }
+      ]
+    },
+    {
+      "id": "atom-0009",
+      "statement": "Prefer `gh pr list` over unauthenticated `curl` or `wget` for GitHub content.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer `gh repo view`, `gh pr view`, `gh pr list`, `gh issue view`, and `gh api` over unauthenticated `curl` or `wget`.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 701,
+          "end_byte": 822
+        }
+      ]
+    },
+    {
+      "id": "atom-0010",
+      "statement": "Prefer `gh pr view` over unauthenticated `curl` or `wget` for GitHub content.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer `gh repo view`, `gh pr view`, `gh pr list`, `gh issue view`, and `gh api` over unauthenticated `curl` or `wget`.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 701,
+          "end_byte": 822
+        }
+      ]
+    },
+    {
+      "id": "atom-0011",
+      "statement": "Prefer `gh repo view` over unauthenticated `curl` or `wget` for GitHub content.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer `gh repo view`, `gh pr view`, `gh pr list`, `gh issue view`, and `gh api` over unauthenticated `curl` or `wget`.",
+          "start_line": 23,
+          "end_line": 23,
+          "start_byte": 701,
+          "end_byte": 822
+        }
+      ]
+    },
+    {
+      "id": "atom-0012",
+      "statement": "Prefer cloning a repository and reading files locally over fetching `raw.githubusercontent.com` blobs directly.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Prefer cloning a repository and reading files locally over fetching `raw.githubusercontent.com` blobs directly.",
+          "start_line": 24,
+          "end_line": 24,
+          "start_byte": 823,
+          "end_byte": 936
+        }
+      ]
+    },
+    {
+      "id": "atom-0013",
+      "statement": "Avoid using GitHub API `/contents/` endpoints as a substitute for cloning and reading repository files.",
+      "kind": "rule",
+      "evidence": [
+        {
+          "quote": "- Avoid using GitHub API `/contents/` endpoints as a substitute for cloning and reading repository files.",
+          "start_line": 25,
+          "end_line": 25,
+          "start_byte": 937,
+          "end_byte": 1042
+        }
+      ]
+    }
+  ]
+}

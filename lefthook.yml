@@ -1,0 +1,6 @@
+pre-commit:
+  commands:
+    format:
+      run: cargo fmt -p skill-tokenizer -- --check
+    lint:
+      run: cargo clippy -p skill-tokenizer --all-targets --no-deps -- -D warnings
