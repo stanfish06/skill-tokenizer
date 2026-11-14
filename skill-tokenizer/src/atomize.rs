@@ -210,7 +210,8 @@ fn request(args: &AtomizeArgs, url: Url, source: &str) -> tokenizers::Result<Com
         .enumerate()
         .map(|(index, line)| format!("{} | {line}", index + 1))
         .collect();
-    let mut request = client.post(url).json(&json!({
+    // The request deadline also bounds a body that keeps sending small chunks.
+    let mut request = client.post(url).timeout(Duration::from_secs(args.timeout_secs)).json(&json!({
         "model": args.model,
         "messages": [
             {"role": "system", "content": PROMPT},
@@ -252,7 +253,7 @@ fn line_starts(source: &str) -> Vec<usize> {
 }
 
 fn body_start(source: &str, starts: &[usize]) -> io::Result<usize> {
-    if source.lines().next() != Some("---") {
+    if source.trim_start_matches('\u{feff}').lines().next() != Some("---") {
         return Ok(0);
     }
     for (index, line) in source.lines().enumerate().skip(1) {
@@ -281,16 +282,24 @@ fn evidence(
         .get(citation.end_line)
         .copied()
         .unwrap_or(source.len());
-    let mut matches = source[window_start..window_end].match_indices(&citation.quote);
-    let start_byte = matches
-        .next()
-        .map(|(offset, _)| window_start + offset)
+    let window = &source[window_start..window_end];
+    let offset = window
+        .find(&citation.quote)
         .ok_or_else(|| invalid("evidence quotation does not match the cited source lines"))?;
-    if matches.next().is_some() {
+    // Search after one character so overlapping occurrences also count.
+    let following = offset
+        + citation
+            .quote
+            .chars()
+            .next()
+            .expect("quotation is nonempty")
+            .len_utf8();
+    if window[following..].contains(&citation.quote) {
         return Err(invalid(
             "evidence quotation is ambiguous within the cited source lines",
         ));
     }
+    let start_byte = window_start + offset;
     let end_byte = start_byte + citation.quote.len();
     let actual_start = starts.partition_point(|offset| *offset <= start_byte);
     let actual_end = starts.partition_point(|offset| *offset < end_byte);
@@ -410,6 +419,9 @@ pub fn run(args: AtomizeArgs) -> tokenizers::Result<()> {
     let body = body_start(&source, &starts)?;
     // Create the temporary output before spending a request on an unwritable path.
     let mut output = if let Some(path) = &args.output {
+        if path.is_dir() {
+            return Err(invalid("output path is a directory; choose a JSON file path").into());
+        }
         if args.path != Path::new("-")
             && path.exists()
             && fs::canonicalize(path)? == fs::canonicalize(&args.path)?

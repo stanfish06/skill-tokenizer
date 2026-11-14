@@ -48,22 +48,26 @@ fn read_request(stream: &mut TcpStream) -> (String, Value) {
     (headers, body)
 }
 
+fn accept(listener: &TcpListener) -> TcpStream {
+    listener.set_nonblocking(true).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        match listener.accept() {
+            Ok((stream, _)) => return stream,
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                assert!(Instant::now() < deadline, "CLI never contacted endpoint");
+                thread::sleep(Duration::from_millis(10));
+            }
+            Err(error) => panic!("{error}"),
+        }
+    }
+}
+
 fn server(status: u16, body: Value) -> (String, thread::JoinHandle<(String, Value)>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    listener.set_nonblocking(true).unwrap();
     let address = format!("http://{}/v1", listener.local_addr().unwrap());
     let handle = thread::spawn(move || {
-        let deadline = Instant::now() + Duration::from_secs(10);
-        let mut stream = loop {
-            match listener.accept() {
-                Ok((stream, _)) => break stream,
-                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                    assert!(Instant::now() < deadline, "CLI never contacted endpoint");
-                    thread::sleep(Duration::from_millis(10));
-                }
-                Err(error) => panic!("{error}"),
-            }
-        };
+        let mut stream = accept(&listener);
         let request = read_request(&mut stream);
         let body = body.to_string();
         write!(
@@ -75,6 +79,122 @@ fn server(status: u16, body: Value) -> (String, thread::JoinHandle<(String, Valu
         request
     });
     (address, handle)
+}
+
+#[test]
+fn bom_frontmatter_cannot_be_used_as_evidence() {
+    let source = "\u{feff}---\nname: sample\n---\nValidate first.\n";
+    assert_failed_extraction_preserves_output(
+        source,
+        200,
+        completion(json!([atom(
+            "The skill name is sample.",
+            "name: sample",
+            2
+        )])),
+        "not YAML frontmatter",
+    );
+    let directory = TempDir::new().unwrap();
+    let input = directory.path().join("SKILL.md");
+    std::fs::write(&input, source).unwrap();
+    let (endpoint, server) = server(
+        200,
+        completion(json!([atom("Validate first.", "Validate first.", 4)])),
+    );
+    let output = cli()
+        .args([
+            "atomize",
+            input.to_str().unwrap(),
+            "--model",
+            "test-model",
+            "--base-url",
+            &endpoint,
+        ])
+        .output()
+        .unwrap();
+    assert_success(&output);
+    let document: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(document["atoms"][0]["evidence"][0]["start_byte"], 24);
+    server.join().unwrap();
+}
+
+#[test]
+fn output_directory_is_rejected_before_network() {
+    let directory = TempDir::new().unwrap();
+    let input = directory.path().join("SKILL.md");
+    std::fs::write(&input, "Validate first.\n").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let endpoint = format!("http://{}/v1", listener.local_addr().unwrap());
+    let output = cli()
+        .args([
+            "atomize",
+            input.to_str().unwrap(),
+            "--model",
+            "test-model",
+            "--base-url",
+            &endpoint,
+            "--output",
+            directory.path().to_str().unwrap(),
+            "--timeout-secs",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("output path is a directory"));
+    assert!(
+        matches!(listener.accept(), Err(error) if error.kind() == std::io::ErrorKind::WouldBlock)
+    );
+}
+
+#[test]
+fn request_timeout_bounds_a_continuously_dripping_response() {
+    let directory = TempDir::new().unwrap();
+    let input = directory.path().join("SKILL.md");
+    let output_path = directory.path().join("atoms.json");
+    std::fs::write(&input, "Validate first.\n").unwrap();
+    std::fs::write(&output_path, "previous result").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let endpoint = format!("http://{}/v1", listener.local_addr().unwrap());
+    let server = thread::spawn(move || {
+        let mut stream = accept(&listener);
+        let _ = read_request(&mut stream);
+        let body = completion(json!([])).to_string();
+        write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).unwrap();
+        // Every individual read can finish within one second, but the body cannot.
+        for chunk in body.as_bytes().chunks(24) {
+            if stream.write_all(chunk).is_err() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(250));
+        }
+    });
+    let output = cli()
+        .args([
+            "atomize",
+            input.to_str().unwrap(),
+            "--model",
+            "test-model",
+            "--base-url",
+            &endpoint,
+            "--output",
+            output_path.to_str().unwrap(),
+            "--timeout-secs",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    server.join().unwrap();
+    assert!(
+        !output.status.success(),
+        "a dripping response exceeded the deadline but succeeded"
+    );
+    assert!(output.stdout.is_empty());
+    assert_eq!(
+        std::fs::read_to_string(output_path).unwrap(),
+        "previous result"
+    );
 }
 
 fn completion(atoms: Value) -> Value {
@@ -368,6 +488,14 @@ fn invalid_evidence_and_schema_do_not_publish_results() {
         completion(json!([atom("Repeat.", "Repeat", 1)])),
         "ambiguous",
     );
+    for (source, quote) in [("aaa\n", "aa"), ("ééé\n", "éé")] {
+        assert_failed_extraction_preserves_output(
+            source,
+            200,
+            completion(json!([atom("A repeated fragment.", quote, 1)])),
+            "ambiguous",
+        );
+    }
 }
 
 #[test]

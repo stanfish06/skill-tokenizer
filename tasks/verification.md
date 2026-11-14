@@ -29,7 +29,53 @@
    `cargo clippy -p skill-tokenizer --all-targets --no-deps -- -D warnings`.
    This command passed without editing vendored source. Manifest warnings about
    the upstream package's profile and redundant homepage remain informational.
-5. Final documented checks and code review: pending before delivery.
+5. Two independent review axes found four boundary defects. Added public CLI
+   regression cases and confirmed failures before fixing them:
+   overlapping ASCII/UTF-8 quotations, BOM-prefixed frontmatter, existing output
+   directories, and a continuously dripping response exceeding the request
+   deadline. The expanded ten-test suite passed after the fixes.
+6. Reviewers inspected the fixes and closed all findings. The standards reviewer
+   independently confirmed the drip response failed after 1.02 seconds with a
+   one-second deadline, metadata evidence was rejected, and directory output
+   caused zero network requests. Existing output was preserved on all failures.
+
+## Review closure
+
+### Standards
+
+Three findings, all resolved: set an explicit request-level timeout in addition
+to blocking-operation timeouts; recognize a UTF-8 BOM when detecting frontmatter
+without altering original byte offsets; reject directory output paths before
+requesting the model. No remaining material findings or heuristic smells.
+
+### Spec
+
+One finding, resolved: `str::match_indices` skipped overlapping occurrences.
+Search again one Unicode character after the first match to reject ambiguous
+quotations, including multibyte overlaps. No other concrete requirement gaps or
+scope creep found. Semantic overlap and compound statements remain the documented
+review boundary of model-generated inventories.
+
+### Final validation
+
+The following documented commands are the delivery gates:
+
+```sh
+cargo fmt -p skill-tokenizer -- --check
+cargo test -p skill-tokenizer
+cargo clippy -p skill-tokenizer --all-targets --no-deps -- -D warnings
+cargo build -p skill-tokenizer
+```
+
+All four commands exited successfully after the review fixes. The full package
+suite reported 10 passed, 0 failed, and 0 ignored.
+
+An independent offline artifact check also verified source SHA-256, prompt
+SHA-256, all 38 final quotations, source line numbers, and UTF-8 byte offsets.
+No paid rerun was needed for the boundary fixes, which leave the prompt unchanged.
+The installed lefthook format/lint checks passed on the implementation commit.
+Staged files were checked for the supplied key's exact bytes without printing it;
+no credential contents were found.
 
 The development environment uses Rust nightly, sccache 0.19.0, and lefthook.
 `mise trust` is documented because this project's environment configuration

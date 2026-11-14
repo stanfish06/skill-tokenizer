@@ -7,5 +7,5 @@
 - [x] Validate provenance, bounds, UTF-8 locations, and output preservation.
 - [x] Add failure-path tests, hooks, and user-facing commands.
 - [x] Obtain live-call cost approval and review a real skill's atoms.
-- [ ] Run documented checks, review the diff, and resolve findings.
-- [ ] Commit and deliver the atomization implementation.
+- [x] Run documented checks, review the diff, and resolve findings.
+- [x] Commit and deliver the atomization implementation.
