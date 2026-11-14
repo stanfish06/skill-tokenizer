@@ -1,7 +1,8 @@
-use clap::Parser as ClapParser;
+use clap::{CommandFactory, Parser as ClapParser, ValueHint};
+use clap_usage::usage::complete::{CompleteOptions, complete};
 use pulldown_cmark::{Event, Options, Parser};
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use tokenizers::decoders::byte_fallback::ByteFallback;
 use tokenizers::models::bpe::{BPE, BpeTrainer, BpeTrainerBuilder};
@@ -11,6 +12,7 @@ use tokenizers::processors::template::TemplateProcessing;
 use tokenizers::{AddedToken, Tokenizer, TokenizerBuilder, TokenizerImpl};
 
 mod atomize;
+mod cli_usage;
 
 #[derive(ClapParser)]
 #[command(
@@ -19,21 +21,36 @@ mod atomize;
     about = "BPE tokenization and source-grounded atomization for agent skills"
 )]
 enum Cli {
+    /// print the Usage spec for completions, documentation, and other tools
+    #[command(long_flag = "usage")]
+    Usage,
+    /// generate a shell completion script (requires usage on PATH at runtime)
+    Completions {
+        #[arg(value_parser = ["bash", "fish", "nu", "powershell", "zsh"])]
+        shell: String,
+    },
     /// extract independently testable facts and rules from one Markdown skill
     Atomize(atomize::AtomizeArgs),
     /// train a BPE tokenizer on every .md file under PATH
     Train {
+        #[arg(value_hint = ValueHint::DirPath)]
         path: PathBuf,
-        #[arg(short, long, default_value = "tokenizer.json")]
+        #[arg(short, long, default_value = "tokenizer.json", value_hint = ValueHint::FilePath)]
         output: PathBuf,
         #[arg(long, default_value_t = 1000)]
         vocab_size: usize,
     },
     /// tokenize stdin with a saved tokenizer json
     Encode {
-        #[arg(default_value = "tokenizer.json")]
+        #[arg(default_value = "tokenizer.json", value_hint = ValueHint::FilePath)]
         model: PathBuf,
     },
+}
+
+fn usage_spec() -> clap_usage::usage::Spec {
+    let mut command = Cli::command();
+    command.build();
+    cli_usage::spec(&mut command)
 }
 
 type Model = TokenizerImpl<BPE, Sequence, WhitespaceSplit, TemplateProcessing, ByteFallback>;
@@ -100,6 +117,20 @@ fn markdown_text(path: &Path) -> Vec<String> {
 
 fn main() -> tokenizers::Result<()> {
     match Cli::parse() {
+        Cli::Usage => writeln!(io::stdout().lock(), "{}", usage_spec())?,
+        Cli::Completions { shell } => {
+            let script = complete(&CompleteOptions {
+                usage_bin: "usage".to_owned(),
+                shell,
+                bin: "skill-tokenizer".to_owned(),
+                cache_key: None,
+                spec: Some(usage_spec()),
+                usage_cmd: None,
+                include_bash_completion_lib: false,
+                source_file: None,
+            })?;
+            writeln!(io::stdout().lock(), "{script}")?;
+        }
         Cli::Atomize(args) => atomize::run(args)?,
         Cli::Train {
             path,

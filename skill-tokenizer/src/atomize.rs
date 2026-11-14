@@ -1,4 +1,4 @@
-use clap::Args;
+use clap::{Args, ValueHint};
 use reqwest::Url;
 use reqwest::blocking::Client;
 use reqwest::header::{AUTHORIZATION, HeaderValue};
@@ -20,9 +20,10 @@ const MAX_RESPONSE_BYTES: u64 = 8 * 1024 * 1024;
 #[derive(Args)]
 pub struct AtomizeArgs {
     /// Markdown file, or - to read stdin
+    #[arg(value_hint = ValueHint::FilePath)]
     pub path: PathBuf,
     /// Write JSON atomically to a file instead of stdout
-    #[arg(short, long)]
+    #[arg(short, long, value_hint = ValueHint::FilePath)]
     pub output: Option<PathBuf>,
     /// Model served by the endpoint (required; there is no paid default)
     #[arg(long, env = "OPENAI_MODEL")]
@@ -35,7 +36,7 @@ pub struct AtomizeArgs {
     )]
     pub base_url: String,
     /// Read a raw API key from this file instead of OPENAI_API_KEY
-    #[arg(long)]
+    #[arg(long, value_hint = ValueHint::FilePath)]
     pub api_key_file: Option<PathBuf>,
     /// Maximum original input bytes; oversized documents fail before a request
     #[arg(long, default_value_t = 131_072, value_parser = clap::value_parser!(u64).range(1..=4_194_304))]

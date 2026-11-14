@@ -15,6 +15,84 @@ fn cli() -> Command {
     command
 }
 
+#[test]
+fn usage_spec_describes_the_cli_without_exposing_environment_values() {
+    let output = cli()
+        .arg("usage")
+        .env("OPENAI_API_KEY", "private-key-must-not-be-exported")
+        .env("OPENAI_MODEL", "private-model-must-not-be-exported")
+        .output()
+        .unwrap();
+    assert_success(&output);
+    let source = String::from_utf8(output.stdout).unwrap();
+    assert!(!source.contains("private-key-must-not-be-exported"));
+    assert!(!source.contains("private-model-must-not-be-exported"));
+    let spec: clap_usage::usage::Spec = source.parse().unwrap();
+    assert_eq!(spec.bin, "skill-tokenizer");
+    for command in ["atomize", "train", "encode", "usage", "completions"] {
+        assert!(
+            spec.cmd.subcommands.contains_key(command),
+            "missing {command}"
+        );
+    }
+    let atomize = &spec.cmd.subcommands["atomize"];
+    for name in ["path", "output", "api_key_file"] {
+        assert_eq!(atomize.complete[name].type_.as_deref(), Some("file"));
+    }
+    assert_eq!(
+        spec.cmd.subcommands["train"].complete["path"]
+            .type_
+            .as_deref(),
+        Some("dir")
+    );
+    assert_eq!(
+        spec.cmd.subcommands["encode"].complete["model"]
+            .type_
+            .as_deref(),
+        Some("file")
+    );
+    assert!(
+        spec.cmd
+            .flags
+            .iter()
+            .any(|flag| flag.long.iter().any(|name| name == "usage"))
+    );
+    assert_eq!(
+        atomize
+            .flags
+            .iter()
+            .find(|flag| flag.name == "model")
+            .unwrap()
+            .env
+            .as_deref(),
+        Some("OPENAI_MODEL")
+    );
+    let alias = cli().arg("--usage").output().unwrap();
+    assert_success(&alias);
+    assert_eq!(String::from_utf8(alias.stdout).unwrap(), source);
+}
+
+#[test]
+fn completion_scripts_cover_supported_shells_and_reject_unknown_shells() {
+    for shell in ["bash", "fish", "nu", "powershell", "zsh"] {
+        let output = cli().args(["completions", shell]).output().unwrap();
+        assert_success(&output);
+        let script = String::from_utf8(output.stdout).unwrap();
+        assert!(
+            script.contains("skill-tokenizer"),
+            "{shell} script does not name the CLI"
+        );
+        assert!(
+            script.contains("atomize"),
+            "{shell} script does not embed the CLI spec"
+        );
+        assert!(script.contains("--api-key-file"));
+    }
+    let output = cli().args(["completions", "unsupported"]).output().unwrap();
+    assert!(!output.status.success());
+    assert!(output.stdout.is_empty());
+}
+
 fn read_request(stream: &mut TcpStream) -> (String, Value) {
     stream
         .set_read_timeout(Some(Duration::from_secs(10)))

@@ -25,6 +25,56 @@ Formatting and lint commands target this package, leaving the vendored tokenizer
 under upstream control. Automated tests use a local HTTP server and never call a
 hosted model or read personal credentials.
 
+## Usage spec and shell completions
+
+The CLI exports a [Usage](https://usage.jdx.dev/) spec from its Clap declarations.
+Commands, flags, help, defaults, shell choices, environment-variable names, and
+file/directory completion hints come from the same declarations used to parse
+the CLI. Environment-variable values and credentials are not exported.
+
+Generate the portable KDL spec with either spelling:
+
+```sh
+./target/debug/skill-tokenizer usage > skill-tokenizer.usage.kdl
+./target/debug/skill-tokenizer --usage
+```
+
+Usage can consume this spec for reference documentation and other integrations.
+The spec describes the CLI; Clap continues to validate and execute commands,
+including numeric limits that the exporter does not represent.
+
+Generate a completion script for `zsh`, `bash`, `fish`, `nu`, or `powershell`:
+
+```sh
+./target/debug/skill-tokenizer completions zsh
+```
+
+Scripts embed the generated spec and need the external
+[Usage CLI](https://usage.jdx.dev/cli/#installation) on `PATH` at completion time.
+Regenerate a saved script after updating `skill-tokenizer`.
+
+For Zsh, run this from the repository root after building:
+
+```sh
+export PATH="$PWD/target/debug:$PATH"
+autoload -Uz compinit
+compinit
+source <(skill-tokenizer completions zsh)
+```
+
+Try Tab after `skill-tokenizer a`, `skill-tokenizer atomize --api`, or
+`skill-tokenizer atomize examples/atomization/gh-cli/SK`. Once the updated binary
+is installed on `PATH`, add `source <(skill-tokenizer completions zsh)` to
+`~/.zshrc` after its existing completion initialization. Bash users must also
+load bash-completion before sourcing their generated script.
+
+Run the repeatable Zsh checks, including files with spaces and directory hints:
+
+```sh
+cargo build -p skill-tokenizer
+zsh scripts/test-completions.zsh
+```
+
 ## BPE tokenization
 
 The existing commands retain their interface and output:
